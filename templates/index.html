@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שטף קריאה</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        input, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .text-display {
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            min-height: 200px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loginSection">
+            <h2>התחברות</h2>
+            <div class="login-form">
+                <input type="text" id="username" placeholder="שם משתמש">
+                <input type="password" id="password" placeholder="סיסמה">
+                <button onclick="login()">התחבר</button>
+            </div>
+        </div>
+        
+        <div id="mainSection" class="hidden">
+            <div class="controls">
+                <button onclick="loadText()">טען טקסט</button>
+                <button onclick="startReading()">התחל קריאה</button>
+                <input type="number" id="speed" value="200" min="50" max="1000">
+                <span>מילים לדקה</span>
+            </div>
+            
+            <div class="text-display" id="textDisplay"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentText = '';
+        let words = [];
+        let currentIndex = 0;
+        let readingInterval;
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('mainSection').classList.remove('hidden');
+            } else {
+                alert(data.message);
+            }
+        }
+        
+        async function loadText() {
+            const response = await fetch('/api/get_texts/1');
+            const data = await response.json();
+            
+            if (data.success && data.texts.length > 0) {
+                const randomIndex = Math.floor(Math.random() * data.texts.length);
+                currentText = data.texts[randomIndex].content;
+                document.getElementById('textDisplay').textContent = currentText;
+            }
+        }
+        
+        function startReading() {
+            if (!currentText) return;
+            
+            words = currentText.split(/\s+/);
+            currentIndex = 0;
+            
+            const speed = document.getElementById('speed').value;
+            const interval = 60000 / speed; // מילישניות בין כל מילה
+            
+            if (readingInterval) clearInterval(readingInterval);
+            
+            readingInterval = setInterval(() => {
+                if (currentIndex >= words.length) {
+                    clearInterval(readingInterval);
+                    return;
+                }
+                
+                document.getElementById('textDisplay').textContent = words[currentIndex];
+                currentIndex++;
+            }, interval);
+        }
+    </script>
+</body>
+</html>
