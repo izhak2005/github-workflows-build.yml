@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [ "main" ]
 
-permissions:
-  contents: write
-  packages: write
-
 jobs:
   build:
     runs-on: windows-latest
@@ -28,40 +24,20 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
-    - name: Create directories
-      run: |
-        mkdir -p assets
-        mkdir -p Output
-        
-    - name: Download Inno Setup
+    - name: Download and Install Inno Setup
       shell: powershell
       run: |
-        Invoke-WebRequest "https://files.jrsoftware.org/is/6/innosetup-6.2.1.exe" -OutFile "innosetup.exe"
-        Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-" -Wait
+        $url = "https://files.jrsoftware.org/is/6/innosetup-6.2.1.exe"
+        $outPath = ".\innosetup.exe"
+        (New-Object System.Net.WebClient).DownloadFile($url, $outPath)
+        Start-Process -Wait -FilePath $outPath -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-"
 
     - name: Build executable
       run: |
-        pyinstaller --onefile --windowed src/app.py
+        pyinstaller --onefile src/app.py
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
         name: ShefefReading-App
         path: dist/app.exe
-
-    - name: Create Release Tag
-      id: create_tag
-      run: |
-        echo "::set-output name=tag_name::v${{ github.run_number }}"
-      shell: bash
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ steps.create_tag.outputs.tag_name }}
-        name: ShefefReading ${{ steps.create_tag.outputs.tag_name }}
-        files: dist/app.exe
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
