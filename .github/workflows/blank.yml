@@ -24,20 +24,16 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
-    - name: Download and Install Inno Setup
-      shell: powershell
-      run: |
-        $url = "https://files.jrsoftware.org/is/6/innosetup-6.2.1.exe"
-        $outPath = ".\innosetup.exe"
-        (New-Object System.Net.WebClient).DownloadFile($url, $outPath)
-        Start-Process -Wait -FilePath $outPath -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-"
-
     - name: Build executable
       run: |
         pyinstaller --onefile src/app.py
 
+    - name: Build installer
+      run: |
+        & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' setup.iss
+
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: ShefefReading-App
-        path: dist/app.exe
+        name: ShefefReading-Setup
+        path: Output/ShefefReading_Setup.exe
