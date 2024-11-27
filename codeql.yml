@@ -24,31 +24,21 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
+    - name: Build executable
+      run: |
+        pyinstaller --onefile --windowed --icon=assets/icon.ico src/app.py
+
     - name: Download Inno Setup
       run: |
         Invoke-WebRequest "https://files.jrsoftware.org/is/6/innosetup-6.2.1.exe" -OutFile "innosetup.exe"
         Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-" -Wait
 
-    - name: Build executable
-      run: |
-        pyinstaller --onefile --windowed --icon=assets/icon.ico src/app.py
-
     - name: Build installer
       run: |
         & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' setup.iss
 
-    - name: Upload installer
+    - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
         name: ShefefReading-Setup
         path: Output/ShefefReading_Setup.exe
-
-    - name: Create Release
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      uses: softprops/action-gh-release@v1
-      with:
-        files: Output/ShefefReading_Setup.exe
-        name: ShefefReading v${{ github.run_number }}
-        tag_name: v${{ github.run_number }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
