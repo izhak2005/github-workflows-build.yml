@@ -1,0 +1,11 @@
+[
+    {
+        "username": "admin",
+        "password": "admin123",
+        "email": "admin@example.com",
+        "is_admin": true,
+        "is_approved": true,
+        "paid": true,
+        "login_count": 0
+    }
+]
